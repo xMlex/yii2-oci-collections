@@ -1,0 +1,21 @@
+{
+    "name": "xmlex/yii2-oci-collections",
+    "description": "trait collections",
+    "type": "library",
+    "keywords": ["yii2","oci","oracle","collections","php","db"],
+    "license": "GPL-2.0+",
+    "authors": [
+        {
+            "name": "Novikov Maxim",
+            "email": "the.mlex@gmail.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "xmlex\\oci\\": ""
+        }
+    }
+}
