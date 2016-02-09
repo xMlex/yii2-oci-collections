@@ -2,9 +2,8 @@
 namespace xmlex\oci;
 
 /**
- * Created by Novikov Maxim for project quality_control_2.
+ * Created by xMlex
  * Date: 25.01.16
- * Используется при переносе старых отчетов, в моделях отчетов, @see app\controllers\ReportsController
  */
 trait OciCollections
 {
@@ -105,34 +104,4 @@ trait OciCollections
                                     ip_project_list => :ip_project_list))', $operators_bind);
     }
 
-    /**
-     * Используется только в отчетах, возвращает массив для ip_step_type,ip_step_num
-     * @param $i
-     * @return array [type,num]
-     */
-    public function getStepType($i)
-    {
-        /** Шаг для группировки */
-        switch ($i) {
-            case 0:
-                return ['DD', 1];
-                break;
-            case 1:
-                return ['DD', 7];
-                break;
-            case 2:
-                return ['MM', 1];
-                break;
-            case 3:
-                return ['MM', 3];
-                break;
-            case 4:
-                return ['MM', 6];
-                break;
-            case 5:
-                return ['YY', 1];
-                break;
-        }
-        return ['MM', 1];
-    }
 }
