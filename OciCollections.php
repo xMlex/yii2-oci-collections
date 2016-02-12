@@ -7,6 +7,18 @@ namespace xmlex\oci;
  */
 trait OciCollections
 {
+
+    /**
+     * Current oracle db link
+     * @return mixed
+     */
+    public function getDbLink()
+    {
+        if (!\Yii::$app->db->isActive)
+            \Yii::$app->db->open();
+        return \Yii::$app->db->pdo->_dbh;
+    }
+
     /**
      *
      * Метод класса, возвращает коллекцию.
@@ -17,10 +29,7 @@ trait OciCollections
      */
     public function createOciCollection(array $array, $type = 'USER_DEF_VARCHAR_ARRAY')
     {
-        if (!\Yii::$app->db->isActive)
-            \Yii::$app->db->open();
-        $oracle_link = \Yii::$app->db->pdo->_dbh;
-        $collection = oci_new_collection($oracle_link, $type);
+        $collection = oci_new_collection($this->getDbLink(), $type);
         foreach ($array as $value) {
             $collection->append($value);
         }
@@ -44,7 +53,7 @@ trait OciCollections
      *
      * @param string $query строка
      * @param array|string $vars массив
-     * @param string $length число
+     * @param int|string $length число
      * @param string $limit число
      *
      * @param int $keys
@@ -52,10 +61,7 @@ trait OciCollections
      */
     public function ociExecute($query, $vars = array(), $length = -1, $limit = null, $keys = OCI_ASSOC)
     {
-        if (!\Yii::$app->db->pdo == null)
-            \Yii::$app->db->open();
-        $oracle_link = \Yii::$app->db->pdo->_dbh;
-        $parse = oci_parse($oracle_link, $query);
+        $parse = oci_parse($this->getDbLink(), $query);
         if (!empty($vars)) {
             foreach ($vars as $key => $value) {
                 if (is_array($value)) {
@@ -76,14 +82,41 @@ trait OciCollections
             return $array;
         } else {
             $error_info = oci_error($parse);
-            oci_rollback($oracle_link);
+            oci_rollback($this->getDbLink());
             oci_free_statement($parse);
-
-            echo "<span style='color:red;'>При выполнении запроса возникла ошибка!</span><br/><b>Код:</b> " . $error_info['code'] . "<br/><b>Сообщение:</b> " . $error_info['message'] . "<br/><b>Запрос:</b><br/><pre>" . $query . "</pre>";
-            exit;
-            return false;
+            throw new \Exception($error_info['message'], $error_info['code']);
         }
     }
+
+    /**
+     * Выполняет запрос и возвращает результат
+     * @param $query
+     * @param $label - название пе
+     * @param array $params
+     * @param int $length
+     * @return mixed
+     * @throws \Exception
+     */
+    public function ociExecuteWithReturn($query, $label, array $params = [], $length = -1)
+    {
+        $parse = oci_parse($this->getDbLink(), $query);
+        foreach ($params as $key => $value) {
+            oci_bind_by_name($parse, $key, $value, $length);
+        }
+        oci_bind_by_name($parse, $label, $var, 20);
+        $execute = oci_execute($parse, OCI_DEFAULT);
+        if ($execute) {
+            oci_commit($this->getDbLink());
+            oci_free_statement($parse);
+            return $var;
+        } else {
+            $error_info = oci_error($parse);
+            oci_rollback($this->getDbLink());
+            oci_free_statement($parse);
+            throw new \Exception($error_info['message'], $error_info['code']);
+        }
+    }
+
 
     /**
      * @param $ip_start_time
