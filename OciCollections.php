@@ -58,6 +58,7 @@ trait OciCollections
      *
      * @param int $keys
      * @return array
+     * @throws \Exception
      */
     public function ociExecute($query, $vars = array(), $length = -1, $limit = null, $keys = OCI_ASSOC)
     {
@@ -101,7 +102,11 @@ trait OciCollections
     {
         $parse = oci_parse($this->getDbLink(), $query);
         foreach ($params as $key => $value) {
-            oci_bind_by_name($parse, $key, $value, $length);
+            if (is_array($value)) {
+                oci_bind_by_name($parse, $key, $params[$key]['value'], $params[$key]['length'], $params[$key]['type']);
+            } else {
+                oci_bind_by_name($parse, $key, $params[$key], $length);
+            }
         }
         oci_bind_by_name($parse, $label, $var, 20);
         $execute = oci_execute($parse, OCI_DEFAULT);
@@ -116,25 +121,4 @@ trait OciCollections
             throw new \Exception($error_info['message'], $error_info['code']);
         }
     }
-
-
-    /**
-     * @param $ip_start_time
-     * @param $ip_finish_time
-     * @param $ip_projects - OCI_Bind со списокм проектов
-     * @return array
-     */
-    public function getOperatorListByProjects($ip_start_time, $ip_finish_time, $ip_projects)
-    {
-        $operators_bind = [
-            'ip_start_time' => $ip_start_time,
-            'ip_finish_time' => $ip_finish_time,
-            'ip_project_list' => $ip_projects,
-        ];
-        return $this->ociExecute('SELECT * FROM TABLE(pkg_common.fnc_get_existing_operators(
-                                    ip_start_time => :ip_start_time,
-                                    ip_finish_time => :ip_finish_time,
-                                    ip_project_list => :ip_project_list))', $operators_bind);
-    }
-
 }
